@@ -1,5 +1,12 @@
 <?php
 
 function taxonomy_term_icon_form_taxonomy_form_term_alter(&$form, &$form_state) {
-  die('yeah');
+  $form['icon'] = array(
+    '#type' => 'select',
+    '#options' => array('foo' => 'bar'),
+  );
+  $form['#submit'][] = 'taxonomy_term_icon_submit';
+}
+
+function taxonomy_term_icon_submit(&$form, &$form_state) {
 }
