@@ -64,8 +64,8 @@ function taxonomy_term_icon_taxonomy($op, $type, $array = NULL) {
     switch ($op) {
       case 'insert':
       case 'update':
-        $primary_key = ($op == 'update') ? 'tid' : null;
         $data = array_intersect_key($array, array('tid' => null, 'icon' => null)); // estrae i valori per tid e icon da $values
+        $primary_key = (taxonomy_term_icon_by_tid($data['tid'])) ? 'tid' : null; // non possiamo basarci sul valore di $op, non e' detto che se $op=update il recored in term_icon gia' esista
         drupal_write_record('term_icon', $data, $primary_key);
         break;
       case 'delete':
