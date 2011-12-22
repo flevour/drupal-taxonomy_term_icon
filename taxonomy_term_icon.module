@@ -1,14 +1,24 @@
 <?php
 
+/**
+ * Implementation of hook_form_FORM_ID_alter().
+ *
+ * Modifica il form di modifica di un termine per aggiungere menu a tendina con scelta categoria.
+ */
 function taxonomy_term_icon_form_taxonomy_form_term_alter(&$form, &$form_state) {
   $term = $form['#term'];
   // Attiviamo l'alter solo per vocabolari specifici e per termini di primo livello
 
   if (in_array($term['vid'], variable_get('taxonomy_term_icon_vids', array('2'))) && empty($term['parent'])) {
+    $icon = taxonomy_term_icon_by_tid($term['tid']);
     $form['icon'] = array(
       '#title' => t('Select icon'),
       '#type' => 'select',
-      '#options' => array('foo' => 'bar'),
+      '#options' => array(
+        'foo' => 'bar',
+        'foo1' => 'bar1',
+      ),
+      '#default_value' => $icon->icon,
     );
     $form['submit']['#weight'] = 1;
     $form['delete']['#weight'] = 1;
@@ -16,5 +26,39 @@ function taxonomy_term_icon_form_taxonomy_form_term_alter(&$form, &$form_state) 
   }
 }
 
+/**
+ * Submit handler per il form di modifica di un termine per salvare su db i dati aggiuntivi.
+ */
 function taxonomy_term_icon_submit(&$form, &$form_state) {
+  $values = $form_state['values'];
+  $data = array_intersect_key($values, array('tid' => null, 'icon' => null)); // estrae i valori per tid e icon da $values
+  $exists = taxonomy_term_icon_by_tid($data['tid']);
+  $primary_key = ($exists) ? 'tid' : array();
+  drupal_write_record('term_icon', $data, $primary_key);
+}
+
+/**
+ * Helper che recupera una mappa di conversion da tid a icona.
+ *
+ * @return array mappa array in cui le chiavi sono i tid e il valore corrispondente e' la classe relativa all'icona.
+ */
+function taxonomy_term_icon_map() {
+  $return = array();
+  // Esempio di query piu' complessa anche se non pertinente $query = "SELECT t.tid, t.* FROM {term_data} t INNER JOIN {term_hierarchy} h ON h.parent = t.tid WHERE h.tid = %d ORDER BY weight, name"
+  $query = "SELECT ti.* FROM {term_icon} ti";
+  $result = db_query($query);
+  while ($row = db_fetch_object($result)) {
+    $return[$row->tid] = $row->icon;
+  }
+  return $return;
+}
+
+/**
+ * Recupera una riga della tabella term_icon utilizzando un term id
+ *
+ * @param int $tid  id del termine di cui recuperare l'icona
+ * @return stdClass istanza di stdClass contenente proprieta' tid/icon
+ */
+function taxonomy_term_icon_by_tid($tid) {
+  return db_fetch_object(db_query("SELECT ti.* FROM {term_icon} ti WHERE ti.tid = %d", $tid));
 }
