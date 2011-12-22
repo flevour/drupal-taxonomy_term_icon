@@ -5,11 +5,35 @@
  *
  * Modifica il form di modifica di un termine per aggiungere menu a tendina con scelta categoria.
  */
+function taxonomy_term_icon_form_taxonomy_form_vocabulary_alter(&$form, &$form_state) {
+  $vid = $form['vid']['#value'];
+  $form['settings']['term_icon'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Associate icons'),
+    '#description' => t('Enable the ability to associate an icon to a term'),
+    '#default_value' => variable_get('taxonomy_term_icon_vocabulary_' . $vid, false),
+  );
+  $form['#submit'][] = 'taxonomy_term_icon_form_taxonomy_submit';
+}
+
+/**
+ * Submit handler per salvare il campo aggiuntivo inserito in taxonomy_form_vocabulary.
+ */
+function taxonomy_term_icon_form_taxonomy_submit($form, $form_state) {
+  $values = $form_state['values'];
+  variable_set('taxonomy_term_icon_vocabulary_' . $values['vid'], $values['term_icon']);
+}
+
+/**
+ * Implementation of hook_form_FORM_ID_alter().
+ *
+ * Modifica il form di modifica di un termine per aggiungere menu a tendina con scelta categoria.
+ */
 function taxonomy_term_icon_form_taxonomy_form_term_alter(&$form, &$form_state) {
   $term = $form['#term'];
   $vocabulary = $form['#vocabulary'];
   // Attiviamo l'alter solo per vocabolari specifici e per termini di primo livello o in fase di creazione.
-  if (!$form_state['confirm_delete'] && in_array($vocabulary['vid'], variable_get('taxonomy_term_icon_vids', array())) && (empty($term['parent']) || !$term['tid'])) {
+  if (!$form_state['confirm_delete'] && variable_get('taxonomy_term_icon_vocabulary_' . $vocabulary['vid'], false) && (empty($term['parent']) || !$term['tid'])) {
     $icon = taxonomy_term_icon_by_tid($term['tid']);
     $form['icon'] = array(
       '#title' => t('Select icon'),
