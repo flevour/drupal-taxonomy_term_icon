@@ -9,7 +9,7 @@ function taxonomy_term_icon_form_taxonomy_form_term_alter(&$form, &$form_state) 
   $term = $form['#term'];
   $vocabulary = $form['#vocabulary'];
   // Attiviamo l'alter solo per vocabolari specifici e per termini di primo livello o in fase di creazione.
-  if (in_array($vocabulary['vid'], variable_get('taxonomy_term_icon_vids', array())) && (empty($term['parent']) || !$term['tid'])) {
+  if (!$form_state['confirm_delete'] && in_array($vocabulary['vid'], variable_get('taxonomy_term_icon_vids', array())) && (empty($term['parent']) || !$term['tid'])) {
     $icon = taxonomy_term_icon_by_tid($term['tid']);
     $form['icon'] = array(
       '#title' => t('Select icon'),
@@ -33,6 +33,9 @@ function taxonomy_term_icon_form_taxonomy_form_term_alter(&$form, &$form_state) 
  * @internal anche in fase di salvataggio di nuovo termine $array['tid'] e' valorizzato correttamente.
  */
 function taxonomy_term_icon_taxonomy($op, $type, $array = NULL) {
+  if ($type == 'vocabulary' && $op == 'delete') {
+    db_query('DELETE FROM {term_icon} WHERE tid IN (SELECT tid FROM {term_data} WHERE vid = %d)', $array['vid']);
+  }
   if ($type == 'term') {
     switch ($op) {
       case 'insert':
