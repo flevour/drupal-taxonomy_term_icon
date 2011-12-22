@@ -1,0 +1,5 @@
+<?php
+
+function taxonomy_term_icon_form_taxonomy_form_term_alter(&$form, &$form_state) {
+  die('yeah');
+}
