@@ -1,11 +1,19 @@
 <?php
 
 function taxonomy_term_icon_form_taxonomy_form_term_alter(&$form, &$form_state) {
-  $form['icon'] = array(
-    '#type' => 'select',
-    '#options' => array('foo' => 'bar'),
-  );
-  $form['#submit'][] = 'taxonomy_term_icon_submit';
+  $term = $form['#term'];
+  // Attiviamo l'alter solo per vocabolari specifici e per termini di primo livello
+
+  if (in_array($term['vid'], variable_get('taxonomy_term_icon_vids', array('2'))) && empty($term['parent'])) {
+    $form['icon'] = array(
+      '#title' => t('Select icon'),
+      '#type' => 'select',
+      '#options' => array('foo' => 'bar'),
+    );
+    $form['submit']['#weight'] = 1;
+    $form['delete']['#weight'] = 1;
+    $form['#submit'][] = 'taxonomy_term_icon_submit';
+  }
 }
 
 function taxonomy_term_icon_submit(&$form, &$form_state) {
