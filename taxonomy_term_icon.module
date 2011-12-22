@@ -7,14 +7,14 @@
  */
 function taxonomy_term_icon_form_taxonomy_form_term_alter(&$form, &$form_state) {
   $term = $form['#term'];
-  // Attiviamo l'alter solo per vocabolari specifici e per termini di primo livello
-
-  if (in_array($term['vid'], variable_get('taxonomy_term_icon_vids', array('2'))) && empty($term['parent'])) {
+  $vocabulary = $form['#vocabulary'];
+  // Attiviamo l'alter solo per vocabolari specifici e per termini di primo livello o in fase di creazione.
+  if (in_array($vocabulary['vid'], variable_get('taxonomy_term_icon_vids', array())) && (empty($term['parent']) || !$term['tid'])) {
     $icon = taxonomy_term_icon_by_tid($term['tid']);
     $form['icon'] = array(
       '#title' => t('Select icon'),
       '#type' => 'select',
-      '#options' => array(
+      '#options' => array( // Questo array contiene come chiavi le classi da assegnare, come valori l'html necessario a far visualizzare l'icona
         'foo' => 'bar',
         'foo1' => 'bar1',
       ),
@@ -22,19 +22,30 @@ function taxonomy_term_icon_form_taxonomy_form_term_alter(&$form, &$form_state) 
     );
     $form['submit']['#weight'] = 1;
     $form['delete']['#weight'] = 1;
-    $form['#submit'][] = 'taxonomy_term_icon_submit';
   }
 }
 
 /**
- * Submit handler per il form di modifica di un termine per salvare su db i dati aggiuntivi.
+ * Implementazione dell'hook_taxonomy.
+ *
+ * Gestisce la tabella di dati aggiuntivi relativi ai term.
+ *
+ * @internal anche in fase di salvataggio di nuovo termine $array['tid'] e' valorizzato correttamente.
  */
-function taxonomy_term_icon_submit(&$form, &$form_state) {
-  $values = $form_state['values'];
-  $data = array_intersect_key($values, array('tid' => null, 'icon' => null)); // estrae i valori per tid e icon da $values
-  $exists = taxonomy_term_icon_by_tid($data['tid']);
-  $primary_key = ($exists) ? 'tid' : array();
-  drupal_write_record('term_icon', $data, $primary_key);
+function taxonomy_term_icon_taxonomy($op, $type, $array = NULL) {
+  if ($type == 'term') {
+    switch ($op) {
+      case 'insert':
+      case 'update':
+        $primary_key = ($op == 'update') ? 'tid' : null;
+        $data = array_intersect_key($array, array('tid' => null, 'icon' => null)); // estrae i valori per tid e icon da $values
+        drupal_write_record('term_icon', $data, $primary_key);
+        break;
+      case 'delete':
+        db_query('DELETE FROM {term_icon} WHERE tid = %d', $array['tid']);
+        break;
+    }
+  }
 }
 
 /**
