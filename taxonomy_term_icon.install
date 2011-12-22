@@ -1,0 +1,35 @@
+<?php
+
+function taxonomy_term_icon_install() {
+  drupal_install_schema('taxonomy_term_icon');
+}
+
+function taxonomy_term_icon_schema() {
+  $schema['term_icon'] = array(
+    'description' => 'Contains icon info for terms',
+    'fields' => array(
+      'tid' => array(
+        'description' => 'The primary identifier for a taxonomy term.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'icon' => array(
+        'description' => 'The primary identifier for a taxonomy term.',
+        'type' => 'varchar',
+        'default' => '',
+        'not null' => TRUE,
+        'length' => 20,
+      ),
+    ),
+    'primary key' => array('tid'),
+  );
+  return $schema;
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function taxonomy_term_icon_uninstall() {
+    drupal_uninstall_schema('taxonomy_term_icon');
+}
